@@ -28,23 +28,28 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
-        - name: {{ .Chart.Name }}
+        - name: {{ .Values.component }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.configMap.enabled }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.component }}-cm
+          {{- end }}
           ports:
-            - name: http
-              containerPort: {{ .Values.service.containerPort }}
-              protocol: TCP
+              - name: http
+                containerPort: {{ .Values.service.containerPort }}
+                protocol: TCP
           livenessProbe:
             httpGet:
               path: /health
-              port: {{ .values.service.containerPort }}
+              port: {{ .Values.service.containerPort }}
           readinessProbe:
             httpGet:
               path: /health
-              port: {{ .values.service.containerPort }}
+              port: {{ .Values.service.containerPort }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
